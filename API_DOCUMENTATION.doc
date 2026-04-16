@@ -1,0 +1,210 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+    <meta charset="utf-8">
+    <title>E-commerce API Documentation</title>
+    <style>
+        body { font-family: "Segoe UI", Calibri, sans-serif; color: #333; line-height: 1.6; }
+        h1 { color: #2C3E50; border-bottom: 2px solid #34495E; padding-bottom: 5px; text-align: center; font-size: 28pt; }
+        h2 { color: #2980B9; border-bottom: 1px solid #BDC3C7; padding-bottom: 3px; margin-top: 30px; font-size: 20pt;}
+        h3 { color: #16A085; margin-top: 20px; font-size: 14pt;}
+        pre, code { font-family: Consolas, "Courier New", monospace; background-color: #F4F6F6; padding: 10px; border: 1px solid #D5D8DC; font-size: 10pt; }
+        code { padding: 2px 4px; }
+        hr { border: 0; border-top: 1px solid #BDC3C7; margin: 30px 0; }
+        ul, li { margin-left: 15px; margin-bottom: 5px;}
+    </style>
+</head>
+<body>
+
+<h1>E-commerce API Documentation</h1>
+<br>
+<p>This documentation provides necessary guidelines and endpoint details for implementing the APIs on the frontend/client applications. The API uses JSON payloads for both requests and responses.</p>
+
+<h2>Base URL</h2>
+<p>If you are developing locally, your base URL will be:</p>
+<pre>http://localhost:8000/api</pre>
+<p>In production, it will be:</p>
+<pre>https://yourdomain.com/api</pre>
+
+<h2>Authentication</h2>
+<p>This API utilizes <strong>JWT (JSON Web Tokens)</strong> for securing protected routes.<br>
+When accessing a protected endpoint, you <strong>must</strong> pass the JWT token in your HTTP headers like so:</p>
+<pre>Authorization: Bearer &lt;your_access_token&gt;</pre>
+
+<hr>
+
+<h2>Authentication Endpoints</h2>
+
+<h3>1. Register User</h3>
+<p>Registers a new user account.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/register</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Request Body:</strong>
+<pre>
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "password123",
+  "password_confirmation": "password123"
+}
+</pre>
+    </li>
+    <li><strong>Success Response (201 Created):</strong>
+<pre>
+{
+  "message": "User successfully registered",
+  "user": { ... }
+}
+</pre>
+    </li>
+    <li><strong>Error Response (400 Bad Request):</strong> Returns validation errors.</li>
+</ul>
+
+<h3>2. Login User</h3>
+<p>Authenticates a user and returns a JWT token.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/login</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Request Body:</strong>
+<pre>
+{
+  "email": "jane@example.com",
+  "password": "password123"
+}
+</pre>
+    </li>
+    <li><strong>Success Response (200 OK):</strong>
+<pre>
+{
+  "access_token": "eyJ0eXAi...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "user": { ... }
+}
+</pre>
+    </li>
+    <li><strong>Error Response (401 Unauthorized):</strong> Returning <code>{"error": "Unauthorized"}</code> if credentials do not match.</li>
+</ul>
+
+<h3>3. Forgot Password</h3>
+<p>Triggers a password reset link to be sent to the user email.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/forgot-password</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Request Body:</strong>
+<pre>
+{
+  "email": "jane@example.com"
+}
+</pre>
+    </li>
+</ul>
+
+<h3>4. Reset Password</h3>
+<p>Resets the password utilizing a valid token previously sent to the email.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/reset-password</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Request Body:</strong>
+<pre>
+{
+  "email": "jane@example.com",
+  "token": "reset_token_value_here",
+  "password": "newpassword123!",
+  "password_confirmation": "newpassword123!"
+}
+</pre>
+    </li>
+</ul>
+
+<h3>5. Get Authenticated User (Profile)</h3>
+<p>Retrieves the logged-in user's profile information.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /auth/me</code></li>
+    <li><strong>Access:</strong> Protected (Requires JWT Token)</li>
+    <li><strong>Response:</strong> Returns the JSON object of the currently authenticated user.</li>
+</ul>
+
+<h3>6. Refresh Token</h3>
+<p>Renews an expired JWT token and provides a new one without needing to login again.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/refresh</code></li>
+    <li><strong>Access:</strong> Protected (Requires valid or recently expired JWT Token)</li>
+    <li><strong>Response:</strong> Returns a new <code>access_token</code> and <code>expires_in</code> details identical to Login.</li>
+</ul>
+
+<h3>7. Logout</h3>
+<p>Invalidates the active JWT token, logging the user out.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>POST /auth/logout</code></li>
+    <li><strong>Access:</strong> Protected (Requires JWT Token)</li>
+    <li><strong>Response:</strong> <code>{"message": "User successfully signed out"}</code></li>
+</ul>
+
+<hr>
+
+<h2>Product Catalog Endpoints</h2>
+
+<h3>1. Retrieve Product List</h3>
+<p>Fetches a paginated listing of all active products.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /products</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Query Parameters:</strong>
+        <ul>
+            <li><code>page</code> (optional, integer): Page number for pagination (e.g., <code>?page=2</code>)</li>
+            <li><code>search</code> (optional, string): Filters products based on keyword match in their name or description (e.g., <code>?search=laptop</code>)</li>
+        </ul>
+    </li>
+    <li><strong>Success Response (200 OK):</strong> Returns a standard Laravel paginated JSON object containing an array of products.</li>
+</ul>
+
+<h3>2. View Single Product Details</h3>
+<p>Fetches detailed information for a specific product item by ID.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /products/{id}</code></li>
+    <li><strong>Access:</strong> Public</li>
+    <li><strong>Success Response (200 OK):</strong> Returns the specific product JSON object.</li>
+    <li><strong>Error Response (404 Not Found):</strong> Returns <code>{"message": "Product not found"}</code> if the product <code>id</code> does not exist.</li>
+</ul>
+
+<hr>
+
+<h2>User Account / Dashboard Endpoints</h2>
+
+<h3>1. User Dashboard Metrics</h3>
+<p>Retrieves dashboard summary statistics and recent order data for the logged-in user.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /user/dashboard</code></li>
+    <li><strong>Access:</strong> Protected (Requires JWT Token)</li>
+    <li><strong>Success Response (200 OK):</strong>
+<pre>
+{
+    "user": { ... },
+    "statistics": {
+        "total_orders": 12
+    },
+    "latest_orders": [
+      { ... },
+      { ... }
+    ]
+}
+</pre>
+    </li>
+</ul>
+
+<h3>2. View Order History</h3>
+<p>Fetches a paginated list of all orders tied to the logged-in user account.</p>
+<ul>
+    <li><strong>Endpoint:</strong> <code>GET /user/orders</code></li>
+    <li><strong>Access:</strong> Protected (Requires JWT Token)</li>
+    <li><strong>Query Parameters:</strong>
+        <ul>
+            <li><code>page</code> (optional, integer): Defaults to page 1</li>
+        </ul>
+    </li>
+    <li><strong>Success Response (200 OK):</strong> Returns a paginated JSON object of user orders.</li>
+</ul>
+
+</body>
+</html>
