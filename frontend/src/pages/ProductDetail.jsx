@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
 
 import { addToCart } from '../store/slices/cartSlice';
 import { toggleWishlist } from '../store/slices/wishlistSlice';
@@ -13,6 +14,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { token } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -82,9 +84,16 @@ const ProductDetail = () => {
               onClick={() => {
                 dispatch(addToCart(product));
               }} 
-              style={{ flex: 1, padding: '1.25rem', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}
+              style={{ 
+                flex: 1, 
+                padding: '1.25rem', 
+                background: 'transparent', 
+                border: '2px solid var(--primary)',
+                color: 'var(--primary)',
+                fontWeight: '700'
+              }}
             >
-              Add to Cart
+              🛒 Add to Cart
             </button>
             <button 
               onClick={() => {
@@ -92,7 +101,7 @@ const ProductDetail = () => {
               }}
               style={{ flex: 1.5, padding: '1.25rem' }}
             >
-              Buy Now
+              ⚡ Buy Now
             </button>
             <button 
               onClick={() => dispatch(toggleWishlist(product))}

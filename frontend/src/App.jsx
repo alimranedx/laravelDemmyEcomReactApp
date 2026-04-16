@@ -9,6 +9,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
+import Checkout from './pages/Checkout';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Sidebar from './components/layout/Sidebar';
@@ -34,7 +35,8 @@ const App = () => {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/checkout" element={token ? <Checkout /> : <Navigate to="/login" />} />
+          <Route path="/checkout" element={<Checkout />} />
+
           <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -1,195 +1,361 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { clearCart } from '../store/slices/cartSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 
-
-
 const Checkout = () => {
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [orderId, setOrderId] = useState(null);
+  const [success, setSuccess] = useState(null); // { orderId, total, phone }
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine if this is a single product checkout
   const singleProduct = location.state?.singleProduct;
   const { items: cartItems } = useSelector((state) => state.cart);
   const checkoutItems = singleProduct ? [singleProduct] : cartItems;
-  
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
-  const [shipping, setShipping] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    phone: '',
     address: '',
     city: '',
-    postalCode: ''
+    postalCode: '',
+    paymentMethod: 'Cash on Delivery',
   });
 
-  // Redirect if cart is empty and not a single product checkout
+  // Redirect if there's nothing to checkout
   useEffect(() => {
-    if (checkoutItems.length === 0 && step !== 3) {
-      navigate('/cart');
+    if (checkoutItems.length === 0 && !success) {
+      navigate('/');
     }
-  }, [checkoutItems.length, navigate, step]);
+  }, [checkoutItems.length, navigate, success]);
 
-  const total = checkoutItems.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
+  const total = checkoutItems.reduce(
+    (acc, item) => acc + item.price * (item.quantity || 1),
+    0
+  );
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleComplete = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError(null);
-    try {
-      const payload = {
-        items: checkoutItems.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity || 1
-        })),
-        shipping_address: `${shipping.firstName} ${shipping.lastName}, ${shipping.address}, ${shipping.city}, ${shipping.postalCode}`,
-        payment_method: 'Stripe' // Default for now as per docs
-      };
 
-      const response = await api.post('/user/checkout', payload);
-      setOrderId(response.data.id || response.data.order_id || 'GRAV-' + Math.floor(Math.random() * 90000));
-      if (!singleProduct) {
-        dispatch(clearCart());
+    const shippingAddress = [
+      form.name,
+      form.phone,
+      form.address,
+      form.city,
+      form.postalCode,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    try {
+      let response;
+
+      if (token) {
+        // Logged-in user — authenticated endpoint
+        response = await api.post('/user/checkout', {
+          items: checkoutItems.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity || 1,
+          })),
+          shipping_address: shippingAddress,
+          payment_method: form.paymentMethod,
+        });
+        if (!singleProduct) dispatch(clearCart());
+      } else {
+        // Guest — public COD endpoint
+        response = await api.post('/guest-checkout', {
+          items: checkoutItems.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity || 1,
+          })),
+          guest_phone: form.phone,
+          shipping_address: shippingAddress,
+        });
       }
-      setStep(3);
+
+      const data = response.data?.data;
+      setSuccess({
+        orderId: data?.id || 'ORD-' + Math.floor(Math.random() * 90000),
+        total,
+        phone: form.phone,
+      });
     } catch (err) {
-      console.error('Checkout failed:', err);
-      setError(err.response?.data?.message || 'Checkout failed. Please check your stock or connection.');
+      setError(
+        err.response?.data?.message ||
+          'Could not place your order. Please check your details and try again.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleShippingChange = (e) => {
-    setShipping({ ...shipping, [e.target.name]: e.target.value });
-  };
+  // ─── Success Screen ────────────────────────────────────────────────────────
+  if (success) {
+    return (
+      <div className="page-container">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-card"
+          style={{ maxWidth: '600px', margin: '4rem auto', textAlign: 'center', padding: '3rem 2rem' }}
+        >
+          <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>🎉</div>
+          <h2 style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>Order Placed!</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '0.5rem' }}>
+            Your order <strong style={{ color: 'var(--text-main)' }}>#{success.orderId}</strong> has been confirmed.
+          </p>
+          <p style={{ color: 'var(--primary)', fontSize: '1.4rem', fontWeight: '800', marginBottom: '1.5rem' }}>
+            ${success.total.toFixed(2)}
+          </p>
 
+          <div style={{
+            padding: '1rem 1.5rem',
+            background: 'rgba(16,185,129,0.07)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            borderRadius: '12px',
+            marginBottom: '2rem',
+          }}>
+            <p style={{ fontWeight: '600', color: 'var(--success)' }}>🛵 Cash on Delivery</p>
+            {success.phone && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+                We'll call <strong>{success.phone}</strong> to confirm your delivery.
+              </p>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {token && (
+              <button
+                onClick={() => navigate('/dashboard')}
+                style={{ background: 'transparent', border: '1px solid var(--glass-border)' }}
+              >
+                📦 My Orders
+              </button>
+            )}
+            <button onClick={() => navigate('/')}>🛍️ Continue Shopping</button>
+          </div>
+
+          {!token && (
+            <p style={{ marginTop: '1.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '700' }}>
+                Create an account
+              </Link>{' '}
+              to track your orders anytime.
+            </p>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Checkout Form ─────────────────────────────────────────────────────────
   return (
     <div className="page-container">
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', position: 'relative' }}>
-          <div style={{ textAlign: 'center', flex: 1, zIndex: 1 }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: step >= 1 ? 'var(--primary)' : 'var(--panel-bg)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem', fontWeight: 'bold' }}>1</div>
-            <span style={{ fontSize: '0.8rem', color: step >= 1 ? 'var(--text-main)' : 'var(--text-muted)' }}>Shipping</span>
-          </div>
-          <div style={{ textAlign: 'center', flex: 1, zIndex: 1 }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: step >= 2 ? 'var(--primary)' : 'var(--panel-bg)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem', fontWeight: 'bold' }}>2</div>
-            <span style={{ fontSize: '0.8rem', color: step >= 2 ? 'var(--text-main)' : 'var(--text-muted)' }}>Payment</span>
-          </div>
-          <div style={{ textAlign: 'center', flex: 1, zIndex: 1 }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: step >= 3 ? 'var(--success)' : 'var(--panel-bg)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem', fontWeight: 'bold' }}>3</div>
-            <span style={{ fontSize: '0.8rem', color: step >= 3 ? 'var(--text-main)' : 'var(--text-muted)' }}>Success</span>
-          </div>
-          <div style={{ position: 'absolute', top: '20px', left: '16%', right: '16%', height: '2px', background: 'var(--glass-border)', zIndex: 0 }}></div>
-        </div>
+      <div style={{ maxWidth: '820px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 360px', gap: '2rem', alignItems: 'start' }}>
 
-        <AnimatePresence mode="wait">
-          {step === 1 && (
-            <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-card">
-              <h2 style={{ marginBottom: '1.5rem' }}>Shipping Information</h2>
-              <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <input type="text" name="firstName" placeholder="First Name" required value={shipping.firstName} onChange={handleShippingChange} />
-                  <input type="text" name="lastName" placeholder="Last Name" required value={shipping.lastName} onChange={handleShippingChange} />
-                </div>
-                <input type="text" name="address" placeholder="Address Line 1" required value={shipping.address} onChange={handleShippingChange} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <input type="text" name="city" placeholder="City" required value={shipping.city} onChange={handleShippingChange} />
-                  <input type="text" name="postalCode" placeholder="Postal Code" required value={shipping.postalCode} onChange={handleShippingChange} />
-                </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Continue to Payment</button>
-              </form>
-            </motion.div>
+        {/* Left: Form */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card"
+        >
+          <h2 style={{ marginBottom: '0.4rem' }}>Delivery Details</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '2rem' }}>
+            No account needed — just your phone and address.
+          </p>
+
+          {error && (
+            <div style={{
+              padding: '1rem',
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid var(--error)',
+              borderRadius: '10px',
+              color: 'var(--error)',
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
+            }}>
+              ⚠️ {error}
+            </div>
           )}
 
-          {step === 2 && (
-            <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-card">
-              <h2 style={{ marginBottom: '1.5rem' }}>Payment Method</h2>
-              
-              {error && (
-                <div style={{ padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--error)', borderRadius: '8px', color: 'var(--error)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                  {error}
-                </div>
-              )}
+          <form onSubmit={handleSubmit}>
+            <label style={labelStyle}>Your Name (optional)</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="e.g. Alimran"
+              value={form.name}
+              onChange={handleChange}
+            />
 
-              <div style={{ padding: '1.5rem', border: '2px solid var(--primary)', borderRadius: '12px', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(var(--primary-rgb), 0.05)' }}>
+            <label style={labelStyle}>Phone Number <span style={{ color: 'var(--error)' }}>*</span></label>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="+880 1712 345678"
+              required
+              value={form.phone}
+              onChange={handleChange}
+              pattern="[+0-9\s\-]{7,20}"
+              title="Enter a valid phone number"
+            />
+
+            <label style={labelStyle}>Delivery Address <span style={{ color: 'var(--error)' }}>*</span></label>
+            <input
+              type="text"
+              name="address"
+              placeholder="House No, Street, Area"
+              required
+              value={form.address}
+              onChange={handleChange}
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>City / District <span style={{ color: 'var(--error)' }}>*</span></label>
+                <input
+                  type="text"
+                  name="city"
+                  placeholder="Dhaka"
+                  required
+                  value={form.city}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Postal Code</label>
+                <input
+                  type="text"
+                  name="postalCode"
+                  placeholder="1212"
+                  value={form.postalCode}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* Payment method — COD always available, card if logged in */}
+            <label style={labelStyle}>Payment Method</label>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              <label style={radioCard(form.paymentMethod === 'Cash on Delivery')}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="Cash on Delivery"
+                  checked={form.paymentMethod === 'Cash on Delivery'}
+                  onChange={handleChange}
+                  style={{ display: 'none' }}
+                />
+                <span style={{ fontSize: '1.3rem' }}>💵</span>
                 <div>
-                  <p style={{ fontWeight: '600' }}>Credit / Debit Card</p>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Visa, Mastercard, Amex</p>
+                  <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>Cash on Delivery</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Pay when received</p>
                 </div>
-                <span style={{ fontSize: '1.5rem' }}>💳</span>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input type="text" placeholder="Card Number" defaultValue="4242 4242 4242 4242" disabled />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <input type="text" placeholder="MM / YY" defaultValue="12/28" disabled />
-                  <input type="password" placeholder="CVC" defaultValue="123" disabled />
-                </div>
-              </div>
+              </label>
 
-              <div style={{ marginTop: '2.5rem', padding: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Shipping To:</span>
-                    <span style={{ maxWidth: '200px', textAlign: 'right', fontSize: '0.9rem' }}>{shipping.address}, {shipping.city}</span>
-                 </div>
-                 <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.8rem 0' }} />
-                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Subtotal ({checkoutItems.length} {checkoutItems.length === 1 ? 'item' : 'items'})</span>
-                    <span>${total.toFixed(2)}</span>
-                 </div>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Shipping</span>
-                    <span style={{ color: 'var(--success)', fontWeight: '600' }}>FREE</span>
-                 </div>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '700' }}>
-                    <span>Total Amount</span>
-                    <span style={{ color: 'var(--primary)' }}>${total.toFixed(2)}</span>
-                 </div>
-              </div>
+              {token && (
+                <label style={radioCard(form.paymentMethod === 'Card')}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="Card"
+                    checked={form.paymentMethod === 'Card'}
+                    onChange={handleChange}
+                    style={{ display: 'none' }}
+                  />
+                  <span style={{ fontSize: '1.3rem' }}>💳</span>
+                  <div>
+                    <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>Card Payment</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Visa / Mastercard</p>
+                  </div>
+                </label>
+              )}
+            </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button onClick={() => setStep(1)} style={{ flex: 1, backgroundColor: 'transparent', border: '1px solid var(--glass-border)' }}>Back</button>
-                <button 
-                  onClick={handleComplete} 
-                  className="btn-primary" 
-                  style={{ flex: 2 }}
-                  disabled={loading}
-                >
-                  {loading ? 'Processing...' : 'Pay & Complete Order'}
-                </button>
-              </div>
-            </motion.div>
+            <button
+              type="submit"
+              style={{ width: '100%', padding: '1.1rem', fontSize: '1rem' }}
+              disabled={loading}
+            >
+              {loading ? '⏳ Placing Order...' : '🛵 Confirm Order'}
+            </button>
 
-          )}
-
-          {step === 3 && (
-            <motion.div key="step3" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-              <div style={{ fontSize: '5rem', marginBottom: '1.5rem' }}>🎉</div>
-              <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Order Confirmed!</h2>
-              <p style={{ color: 'var(--text-muted)', margin: '1.5rem 0', fontSize: '1.1rem', lineHeight: '1.6' }}>
-                Thank you for your purchase. Your order number is <strong style={{ color: 'var(--text-main)' }}>#{orderId}</strong>.<br/>
-                We've processed your payment of <strong style={{ color: 'var(--primary)' }}>${total.toFixed(2)}</strong> for {checkoutItems.length} {checkoutItems.length === 1 ? 'item' : 'items'}.
+            {!token && (
+              <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '700' }}>Sign in</Link>
+                {' '}to track orders & use card payment
               </p>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-                <button onClick={() => navigate('/dashboard')} style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}>View My Orders</button>
-                <button className="btn-primary" onClick={() => navigate('/')}>Back to Shop</button>
-              </div>
-            </motion.div>
+            )}
+          </form>
+        </motion.div>
 
-          )}
-        </AnimatePresence>
+        {/* Right: Order Summary */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="glass-card"
+          style={{ padding: '1.5rem', position: 'sticky', top: '6rem' }}
+        >
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem', fontWeight: '700' }}>Order Summary</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            {checkoutItems.map((item) => (
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                <span style={{ color: 'var(--text-muted)', flex: 1, marginRight: '0.5rem' }}>
+                  {item.name} × {item.quantity || 1}
+                </span>
+                <span style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>
+                  ${(item.price * (item.quantity || 1)).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Shipping</span>
+              <span style={{ color: 'var(--success)', fontWeight: '600' }}>FREE</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: '800' }}>
+              <span>Total</span>
+              <span style={{ color: 'var(--primary)' }}>${total.toFixed(2)}</span>
+            </div>
+          </div>
+        </motion.div>
+
       </div>
     </div>
   );
 };
+
+const labelStyle = {
+  display: 'block',
+  marginBottom: '0.35rem',
+  fontSize: '0.85rem',
+  color: 'var(--text-muted)',
+  fontWeight: '600',
+};
+
+const radioCard = (selected) => ({
+  flex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  padding: '0.85rem 1rem',
+  borderRadius: '12px',
+  border: `2px solid ${selected ? 'var(--primary)' : 'var(--glass-border)'}`,
+  background: selected ? 'rgba(99,102,241,0.07)' : 'transparent',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+});
 
 export default Checkout;
