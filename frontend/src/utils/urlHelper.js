@@ -3,16 +3,13 @@
  * Handles absolute URLs, relative paths with/without storage prefix, and placeholders.
  */
 export const getImageUrl = (prod, size = '400x300') => {
-  if (!prod) return `https://via.placeholder.com/${size}?text=No+Data`;
-
-  // Check all possible field names for the image path
-  const imgPath = prod.image_path || prod.image_url || prod.image || prod.thumbnail || prod.product_image;
+  if (!prod || !prod.image_path) return `https://via.placeholder.com/${size}?text=No+Data`;
+  const imgPath = prod.image_path ?? '';
   
   if (!imgPath) {
     return `https://via.placeholder.com/${size}?text=No+Image`;
   }
 
-  // If it's already an absolute URL (starts with http)
   if (imgPath.startsWith('http')) {
     return imgPath;
   }
