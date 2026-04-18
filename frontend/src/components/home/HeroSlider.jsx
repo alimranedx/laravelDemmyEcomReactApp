@@ -179,13 +179,13 @@ const HeroSlider = ({ products }) => {
       }}>
         <button 
           onClick={() => setCurrent((prev) => (prev === 0 ? products.length - 1 : prev - 1))}
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'var(--social-bg)', color: 'var(--text-h)', border: '1px solid var(--glass-border)', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           ←
         </button>
         <button 
           onClick={() => setCurrent((prev) => (prev === products.length - 1 ? 0 : prev + 1))}
-          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'var(--social-bg)', color: 'var(--text-h)', border: '1px solid var(--glass-border)', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           →
         </button>
