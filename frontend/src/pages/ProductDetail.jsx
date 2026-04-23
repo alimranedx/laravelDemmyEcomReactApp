@@ -8,6 +8,7 @@ import { toggleWishlist } from '../store/slices/wishlistSlice';
 import api from '../api/client';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../utils/urlHelper';
+import ImageMagnifier from '../components/ImageMagnifier';
 
 
 const ProductDetail = () => {
@@ -19,6 +20,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
 
   useEffect(() => {
@@ -27,6 +29,8 @@ const ProductDetail = () => {
       try {
         const response = await api.get(`/products/${id}`);
         setProduct(response.data);
+        // Initialize selected image with primary image path
+        setSelectedImage(response.data.image_path);
       } catch (err) {
         setError(err.response?.data?.message || 'Product not found');
       } finally {
@@ -39,30 +43,68 @@ const ProductDetail = () => {
   if (loading) return <div className="page-container"><p>Loading details...</p></div>;
   if (error) return <div className="page-container"><h1>{error}</h1><Link to="/">Back to Catalog</Link></div>;
 
+  const allImages = product.images && product.images.length > 0 
+    ? [product.image_path, ...product.images.filter(img => img.image_path !== product.image_path).map(img => img.image_path)]
+    : [product.image_path];
+
   return (
     <div className="page-container">
       <Link to="/" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-block', marginBottom: '2rem' }}>
         &larr; Back to Catalog
       </Link>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '4rem', alignItems: 'start' }}>
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card"
-          style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}
-        >
-          <img 
-            src={getImageUrl(product)} 
-            alt={product.name} 
-            style={{ width: '100%', maxHeight: '500px', objectFit: 'contain', borderRadius: '12px' }}
-            onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=Image+Not+Found'; }}
-          />
-        </motion.div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '3rem', alignItems: 'start', position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', zIndex: 10 }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            key={selectedImage} // Force re-animation on image change
+            className="glass-card"
+            style={{ padding: '1rem', display: 'flex', justifyContent: 'center', minHeight: '400px' }}
+          >
+            <ImageMagnifier 
+              src={getImageUrl(selectedImage)} 
+              width="100%"
+              height="500px"
+              zoomLevel={2.5}
+            />
+          </motion.div>
+
+          {/* Thumbnail Gallery */}
+          {allImages.length > 1 && (
+            <div style={{ display: 'flex', gap: '0.8rem', overflowX: 'auto', padding: '0.5rem 0' }} className="custom-scrollbar">
+              {allImages.map((img, idx) => (
+                <motion.div
+                  key={idx}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedImage(img)}
+                  style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    flexShrink: 0, 
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    border: `2px solid ${selectedImage === img ? 'var(--primary)' : 'var(--glass-border)'}`,
+                    overflow: 'hidden',
+                    backgroundColor: 'rgba(255,255,255,0.05)'
+                  }}
+                >
+                  <img 
+                    src={getImageUrl(img, '100x100')} 
+                    alt={`Thumbnail ${idx}`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
+          style={{ position: 'relative', zIndex: 1 }}
         >
           <span style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', display: 'inline-block', marginBottom: '1rem' }}>
             New Arrival
