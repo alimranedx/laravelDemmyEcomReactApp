@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/urlHelper';
 import HeroSlider from '../components/home/HeroSlider';
+import { addToCart } from '../store/slices/cartSlice';
 
 
 const Home = () => {
@@ -112,9 +113,21 @@ const Home = () => {
             <h3 style={{ marginBottom: '0.5rem' }}>{prod.name}</h3>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--primary)' }}>${prod.price}</span>
-              <Link to={`/products/${prod.id}`}>
-                <button style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>View Details</button>
-              </Link>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Link to={`/products/${prod.id}`} style={{ textDecoration: 'none' }}>
+                  <button style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Details
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => dispatch(addToCart(prod))}
+                  style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  Add
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}

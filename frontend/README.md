@@ -1,16 +1,61 @@
-# React + Vite
+# 🛒 Dummy Ecommerce Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React frontend for the Dummy Ecommerce project. It integrates with the Laravel backend API and uses Laravel Echo for real-time notifications.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Quick Start
 
-## React Compiler
+### 1. Installation
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Environment Setup
+Copy the example environment file and update it with your backend details:
+```bash
+cp .env.example .env
+```
 
-## Expanding the ESLint configuration
+### 3. Required Environment Variables
+Ensure your `.env` has the correct Reverb keys (matching the backend):
+```env
+VITE_API_URL="http://127.0.0.1:8000/api"
+VITE_REVERB_APP_KEY="your_reverb_key"
+VITE_REVERB_HOST="127.0.0.1"
+VITE_REVERB_PORT="8081"
+VITE_REVERB_SCHEME="http"
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 4. Run Development Server
+```bash
+npm run dev
+```
+
+---
+
+## 🔑 Understanding Reverb Keys
+When syncing this project between devices, keep in mind:
+*   **REVERB_APP_KEY**: This is the "Public Key". Your React code uses this to connect to the WebSocket server.
+*   **REVERB_APP_SECRET**: This is the "Private Key". Your Laravel backend uses this to authorize broadcasts.
+*   **The Mismatch Problem**: If you generate new keys on the backend using `php artisan install:broadcasting --reverb`, you **must** copy the new `KEY` to your frontend `.env`. If they don't match, you will see a `Pusher error: Not found`.
+
+---
+
+## 🔔 Real-time Notifications (WebSocket)
+
+The frontend uses **Pusher-js** and **Laravel Echo** to listen for events from the Laravel Reverb server.
+
+### Common Issues
+- **"Pusher error: Not found"**: This means the `VITE_REVERB_APP_KEY` in your `.env` does not match the one generated in the backend.
+- **"WebSocket connection failed"**: Ensure the backend Reverb server is running: `php artisan reverb:start`.
+- **"WSS" error on Localhost**: If the browser tries to use `wss://` (secure), ensure `VITE_REVERB_SCHEME=http` is set in your `.env`.
+
+---
+
+## 🛠️ Tech Stack
+- **React 19**
+- **Vite**
+- **Redux Toolkit** (State management)
+- **Framer Motion** (Animations)
+- **Laravel Echo** (WebSockets)

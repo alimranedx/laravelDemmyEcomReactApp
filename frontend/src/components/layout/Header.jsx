@@ -13,7 +13,7 @@ const Header = () => {
   const wishlistItems = useSelector((state) => state.wishlist.items);
   const dispatch = useDispatch();
 
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = cartItems.length;
 
   return (
     <nav style={{ 
@@ -58,21 +58,62 @@ const Header = () => {
 
       <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
         <Link to="/" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: '500' }}>Catalog</Link>
-        <Link to="/wishlist" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: '500', position: 'relative' }}>
-          Wishlist
-          {wishlistItems.length > 0 && (
-            <span style={{ position: 'absolute', top: '-8px', right: '-12px', background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem' }}>
-              {wishlistItems.length}
-            </span>
-          )}
+        <Link to="/wishlist" style={{ color: 'var(--text-main)', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }} title="Wishlist">
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill={wishlistItems.length > 0 ? 'var(--error)' : 'none'} stroke={wishlistItems.length > 0 ? 'var(--error)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            {wishlistItems.length > 0 && (
+              <span style={{ 
+                position: 'absolute', 
+                top: '-5px', 
+                right: '-8px', 
+                background: 'var(--error)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontSize: '0.65rem',
+                fontWeight: '800',
+                border: '2px solid var(--bg-color)'
+              }}>
+                {wishlistItems.length}
+              </span>
+            )}
+          </motion.div>
         </Link>
-        <Link to="/cart" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: '500', position: 'relative' }}>
-          Cart
-          {cartCount > 0 && (
-            <span style={{ position: 'absolute', top: '-8px', right: '-12px', background: 'var(--success)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '0.7rem' }}>
-              {cartCount}
-            </span>
-          )}
+
+        <Link to="/cart" style={{ color: 'var(--text-main)', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }} title="Shopping Cart">
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            {cartCount > 0 && (
+              <span style={{ 
+                position: 'absolute', 
+                top: '-5px', 
+                right: '-8px', 
+                background: 'var(--primary)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontSize: '0.65rem',
+                fontWeight: '800',
+                border: '2px solid var(--bg-color)'
+              }}>
+                {cartCount}
+              </span>
+            )}
+          </motion.div>
         </Link>
         
         <button 

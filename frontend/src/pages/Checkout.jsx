@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { clearCart } from '../store/slices/cartSlice';
+import { clearCart, updateQuantity } from '../store/slices/cartSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 
@@ -13,8 +13,11 @@ const Checkout = () => {
   const location = useLocation();
 
   const singleProduct = location.state?.singleProduct;
+  const [singleProductQty, setSingleProductQty] = useState(singleProduct?.quantity || 1);
   const { items: cartItems } = useSelector((state) => state.cart);
-  const checkoutItems = singleProduct ? [singleProduct] : cartItems;
+  const checkoutItems = singleProduct 
+    ? [{ ...singleProduct, quantity: singleProductQty }] 
+    : cartItems;
   const { user, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
@@ -82,6 +85,7 @@ const Checkout = () => {
           guest_phone: form.phone,
           shipping_address: shippingAddress,
         });
+        if (!singleProduct) dispatch(clearCart());
       }
 
       const data = response.data?.data;
@@ -310,13 +314,47 @@ const Checkout = () => {
           <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem', fontWeight: '700' }}>Order Summary</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
             {checkoutItems.map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                <span style={{ color: 'var(--text-muted)', flex: 1, marginRight: '0.5rem' }}>
-                  {item.name} × {item.quantity || 1}
-                </span>
-                <span style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>
-                  ${(item.price * (item.quantity || 1)).toFixed(2)}
-                </span>
+              <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                  <span style={{ color: 'var(--text-main)', fontWeight: '600', flex: 1, marginRight: '0.5rem' }}>
+                    {item.name}
+                  </span>
+                  <span style={{ fontWeight: '700', whiteSpace: 'nowrap' }}>
+                    ${(item.price * (item.quantity || 1)).toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>${item.price} / unit</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (singleProduct) {
+                          setSingleProductQty(prev => Math.max(1, prev - 1));
+                        } else {
+                          dispatch(updateQuantity({ id: item.id, quantity: item.quantity - 1 }));
+                        }
+                      }}
+                      style={{ padding: '0.1rem 0.5rem', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}
+                    >
+                      -
+                    </button>
+                    <span style={{ fontSize: '0.9rem', width: '25px', textAlign: 'center', fontWeight: '700' }}>{item.quantity}</span>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (singleProduct) {
+                          setSingleProductQty(prev => prev + 1);
+                        } else {
+                          dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
+                        }
+                      }}
+                      style={{ padding: '0.1rem 0.5rem', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

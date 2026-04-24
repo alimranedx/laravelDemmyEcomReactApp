@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../../store/slices/cartSlice';
 import { getImageUrl } from '../../utils/urlHelper';
 
 const HeroSlider = ({ products }) => {
+  const dispatch = useDispatch();
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -92,11 +95,40 @@ const HeroSlider = ({ products }) => {
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Price starts from</span>
                 <span style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--primary)' }}>${currentProd.price}</span>
               </div>
-              <Link to={`/products/${currentProd.id}`}>
-                <button style={{ padding: '1rem 2.5rem', fontSize: '1rem', borderRadius: '14px' }}>
-                  Shop Now
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <Link to={`/products/${currentProd.id}`} style={{ textDecoration: 'none' }}>
+                  <button style={{ 
+                    padding: '0.75rem 1.5rem', 
+                    fontSize: '0.9rem', 
+                    borderRadius: '12px', 
+                    background: 'rgba(255,255,255,0.05)', 
+                    border: '1px solid var(--glass-border)', 
+                    color: 'var(--text-main)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    View
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => dispatch(addToCart(currentProd))}
+                  style={{ 
+                    padding: '0.75rem 1.5rem', 
+                    fontSize: '0.9rem', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #818cf8 100%)',
+                    boxShadow: '0 8px 20px -5px rgba(99, 102, 241, 0.3)'
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  Add
                 </button>
-              </Link>
+              </div>
             </motion.div>
           </div>
 
