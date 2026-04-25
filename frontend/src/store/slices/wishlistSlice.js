@@ -60,7 +60,9 @@ const wishlistSlice = createSlice({
       })
       .addCase(fetchWishlist.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        // The backend returns an array of Wishlist models: [{ id, user_id, product_id, product: {...} }, ...]
+        // We flatten this to just the product objects so the rest of the app can treat them as regular products.
+        state.items = action.payload.map(item => item.product).filter(Boolean);
       })
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.loading = false;

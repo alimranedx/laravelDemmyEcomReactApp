@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { clearCart, updateQuantity } from '../store/slices/cartSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
+import toast from 'react-hot-toast';
 
 const Checkout = () => {
   const [loading, setLoading] = useState(false);
@@ -88,9 +89,11 @@ const Checkout = () => {
         if (!singleProduct) dispatch(clearCart());
       }
 
+      toast.success('Order placed successfully!');
       const data = response.data?.data;
       setSuccess({
         orderId: data?.id || 'ORD-' + Math.floor(Math.random() * 90000),
+        paymentId: data?.payment_id,
         total,
         phone: form.phone,
       });
@@ -116,8 +119,11 @@ const Checkout = () => {
         >
           <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>🎉</div>
           <h2 style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>Order Placed!</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '0.5rem' }}>
-            Your order <strong style={{ color: 'var(--text-main)' }}>#{success.orderId}</strong> has been confirmed.
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.7', marginBottom: '0.25rem' }}>
+            Order ID: <strong style={{ color: 'var(--text-main)' }}>#{success.orderId}</strong>
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+            Payment ID: <strong style={{ color: 'var(--text-main)' }}>{success.paymentId}</strong>
           </p>
           <p style={{ color: 'var(--primary)', fontSize: '1.4rem', fontWeight: '800', marginBottom: '1.5rem' }}>
             ${success.total.toFixed(2)}

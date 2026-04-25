@@ -9,6 +9,7 @@ import api from '../api/client';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../utils/urlHelper';
 import ImageMagnifier from '../components/ImageMagnifier';
+import toast from 'react-hot-toast';
 
 
 const ProductDetail = () => {
@@ -16,6 +17,7 @@ const ProductDetail = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
+  const { items: wishlistItems } = useSelector((state) => state.wishlist);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,7 @@ const ProductDetail = () => {
                     borderRadius: '8px',
                     border: `2px solid ${selectedImage === img ? 'var(--primary)' : 'var(--glass-border)'}`,
                     overflow: 'hidden',
-                    backgroundColor: 'rgba(255,255,255,0.05)'
+                    backgroundColor: 'var(--panel-bg)'
                   }}
                 >
                   <img 
@@ -125,6 +127,7 @@ const ProductDetail = () => {
             <button 
               onClick={() => {
                 dispatch(addToCart(product));
+                toast.success(`${product.name} added to cart`);
               }} 
               style={{ 
                 flex: 1, 
@@ -145,21 +148,32 @@ const ProductDetail = () => {
             >
               ⚡ Buy Now
             </button>
-            <button 
-              onClick={() => dispatch(toggleWishlist(product))}
-              style={{ 
-                padding: '1.25rem', 
-                backgroundColor: 'rgba(255,255,255,0.05)', 
-                border: '1px solid var(--glass-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '60px'
-              }}
-              title="Add to Wishlist"
-            >
-              ❤️
-            </button>
+            {token && (
+              <button 
+                onClick={() => {
+                  dispatch(toggleWishlist(product));
+                  const isWishlisted = wishlistItems.some(item => item.id === product.id);
+                  if (isWishlisted) {
+                    toast.success('Removed from wishlist');
+                  } else {
+                    toast.success('Added to wishlist');
+                  }
+                }}
+                style={{ 
+                  padding: '1.25rem', 
+                  backgroundColor: 'var(--panel-bg)', 
+                  border: '1px solid var(--glass-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '60px',
+                  color: 'var(--text-main)'
+                }}
+                title="Add to Wishlist"
+              >
+                ❤️
+              </button>
+            )}
           </div>
 
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { removeFromCart, updateQuantity } from '../store/slices/cartSlice';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../utils/urlHelper';
+import toast from 'react-hot-toast';
 
 
 const Cart = () => {
@@ -34,7 +35,7 @@ const Cart = () => {
               <img 
                 src={getImageUrl(item)} 
                 alt={item.name} 
-                style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '8px', background: 'rgba(255,255,255,0.05)' }} 
+                style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '8px', background: 'var(--panel-bg)', border: '1px solid var(--glass-border)' }} 
               />
               <div style={{ flexGrow: 1 }}>
                 <Link to={`/products/${item.id}`} style={{ textDecoration: 'none', color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: '600' }}>
@@ -48,7 +49,13 @@ const Cart = () => {
                 <button onClick={() => dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }))} style={{ padding: '0.2rem 0.6rem', fontSize: '1rem' }}>+</button>
               </div>
               <p style={{ fontWeight: '700', minWidth: '80px', textAlign: 'right' }}>${(item.price * item.quantity).toFixed(2)}</p>
-              <button onClick={() => dispatch(removeFromCart(item.id))} style={{ backgroundColor: 'transparent', color: 'var(--error)', padding: '0.5rem', marginLeft: '1rem' }}>
+              <button 
+                onClick={() => {
+                  dispatch(removeFromCart(item.id));
+                  toast.success('Removed from cart');
+                }} 
+                style={{ backgroundColor: 'transparent', color: 'var(--error)', padding: '0.5rem', marginLeft: '1rem' }}
+              >
                 ✕
               </button>
             </div>

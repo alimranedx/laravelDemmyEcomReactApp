@@ -7,11 +7,13 @@ import { Link } from 'react-router-dom';
 import { getImageUrl } from '../utils/urlHelper';
 import HeroSlider from '../components/home/HeroSlider';
 import { addToCart } from '../store/slices/cartSlice';
+import toast from 'react-hot-toast';
 
 
 const Home = () => {
   const dispatch = useDispatch();
   const { items, loading, pagination } = useSelector((state) => state.products);
+  const { token } = useSelector((state) => state.auth);
   const wishlistItems = useSelector((state) => state.wishlist.items);
   const [search, setSearch] = useState('');
 
@@ -79,28 +81,38 @@ const Home = () => {
             style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
           >
             {/* Same product card content as before... */}
-            <button 
-              onClick={() => dispatch(toggleWishlist(prod))}
-              style={{ 
-                position: 'absolute', 
-                top: '1rem', 
-                right: '1rem', 
-                zIndex: 10, 
-                background: 'rgba(255,255,255,0.1)', 
-                border: 'none', 
-                borderRadius: '50%', 
-                width: '35px', 
-                height: '35px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                padding: 0,
-                color: wishlistItems.find(item => item.id === prod.id) ? 'var(--error)' : 'white'
-              }}
-            >
-              ❤️
-            </button>
-            <div style={{ height: '200px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            {token && (
+              <button 
+                onClick={() => {
+                  dispatch(toggleWishlist(prod));
+                  const isWishlisted = wishlistItems.some(item => item.id === prod.id);
+                  if (isWishlisted) {
+                    toast.success('Removed from wishlist');
+                  } else {
+                    toast.success('Added to wishlist');
+                  }
+                }}
+                style={{ 
+                  position: 'absolute', 
+                  top: '1rem', 
+                  right: '1rem', 
+                  zIndex: 10, 
+                  background: 'var(--panel-bg)', 
+                  border: '1px solid var(--glass-border)', 
+                  borderRadius: '50%', 
+                  width: '35px', 
+                  height: '35px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  padding: 0,
+                  color: wishlistItems.find(item => item.id === prod.id) ? 'var(--error)' : 'var(--text-muted)'
+                }}
+              >
+                ❤️
+              </button>
+            )}
+            <div style={{ height: '200px', backgroundColor: 'var(--panel-bg)', borderRadius: '12px', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                <img 
                  src={getImageUrl(prod)} 
                  alt={prod.name} 
@@ -115,13 +127,16 @@ const Home = () => {
               <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--primary)' }}>${prod.price}</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <Link to={`/products/${prod.id}`} style={{ textDecoration: 'none' }}>
-                  <button style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <button style={{ padding: '0.6rem 0.8rem', fontSize: '0.85rem', background: 'var(--panel-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     Details
                   </button>
                 </Link>
                 <button 
-                  onClick={() => dispatch(addToCart(prod))}
+                  onClick={() => {
+                    dispatch(addToCart(prod));
+                    toast.success(`${prod.name} added to cart`);
+                  }}
                   style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>

@@ -14,6 +14,8 @@ import Checkout from './pages/Checkout';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Sidebar from './components/layout/Sidebar';
+import TrackOrder from './pages/TrackOrder';
+import { Toaster } from 'react-hot-toast';
 
 
 const App = () => {
@@ -35,16 +37,25 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" />} />
           <Route path="/checkout" element={<Checkout />} />
 
           <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/login" />} />
         </Routes>
         <Footer />
+        <Toaster position="bottom-right" toastOptions={{
+          style: {
+            background: 'var(--panel-bg)',
+            color: 'var(--text-main)',
+            border: '1px solid var(--glass-border)',
+            backdropFilter: 'blur(10px)',
+          }
+        }} />
       </Router>
     </div>
   );

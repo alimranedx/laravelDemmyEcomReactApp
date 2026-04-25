@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import api from '../../api/client';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -21,9 +22,12 @@ const Register = () => {
     setError(null);
     try {
       await api.post('/auth/register', formData);
-      navigate('/login', { state: { message: 'Registration successful! Please sign in.' } });
+      toast.success('Registration successful! Please sign in.');
+      navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please check your details.');
+      const msg = err.response?.data?.message || 'Registration failed. Please check your details.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

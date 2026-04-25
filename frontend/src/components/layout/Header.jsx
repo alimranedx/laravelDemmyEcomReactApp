@@ -4,6 +4,7 @@ import { logout } from '../../store/slices/authSlice';
 import { toggleTheme } from '../../store/slices/themeSlice';
 import { toggleSidebar } from '../../store/slices/uiSlice';
 import { motion } from 'framer-motion';
+import { confirmAction } from '../../utils/alerts';
 
 
 const Header = () => {
@@ -58,33 +59,36 @@ const Header = () => {
 
       <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
         <Link to="/" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: '500' }}>Catalog</Link>
-        <Link to="/wishlist" style={{ color: 'var(--text-main)', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }} title="Wishlist">
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill={wishlistItems.length > 0 ? 'var(--error)' : 'none'} stroke={wishlistItems.length > 0 ? 'var(--error)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-            {wishlistItems.length > 0 && (
-              <span style={{ 
-                position: 'absolute', 
-                top: '-5px', 
-                right: '-8px', 
-                background: 'var(--error)', 
-                color: 'white', 
-                borderRadius: '50%', 
-                width: '18px', 
-                height: '18px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontSize: '0.65rem',
-                fontWeight: '800',
-                border: '2px solid var(--bg-color)'
-              }}>
-                {wishlistItems.length}
-              </span>
-            )}
-          </motion.div>
-        </Link>
+        <Link to="/track-order" style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: '500' }}>Track Order</Link>
+        {token && (
+          <Link to="/wishlist" style={{ color: 'var(--text-main)', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }} title="Wishlist">
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill={wishlistItems.length > 0 ? 'var(--error)' : 'none'} stroke={wishlistItems.length > 0 ? 'var(--error)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              {wishlistItems.length > 0 && (
+                <span style={{ 
+                  position: 'absolute', 
+                  top: '-5px', 
+                  right: '-8px', 
+                  background: 'var(--error)', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: '18px', 
+                  height: '18px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '0.65rem',
+                  fontWeight: '800',
+                  border: '2px solid var(--bg-color)'
+                }}>
+                  {wishlistItems.length}
+                </span>
+              )}
+            </motion.div>
+          </Link>
+        )}
 
         <Link to="/cart" style={{ color: 'var(--text-main)', textDecoration: 'none', position: 'relative', display: 'flex', alignItems: 'center' }} title="Shopping Cart">
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
@@ -140,7 +144,15 @@ const Header = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '1rem', borderLeft: '1px solid var(--glass-border)' }}>
               <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Hi, {user?.name?.split(' ')[0] || 'User'}</span>
               <button 
-                onClick={() => dispatch(logout())}
+                onClick={async () => {
+                  const confirmed = await confirmAction({
+                    title: 'Sign Out?',
+                    text: 'Are you sure you want to log out of your account?',
+                    confirmButtonText: 'Logout',
+                    danger: true
+                  });
+                  if (confirmed) dispatch(logout());
+                }}
                 style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
               >
                 Logout

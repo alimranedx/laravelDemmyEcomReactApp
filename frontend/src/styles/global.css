@@ -178,7 +178,7 @@ h1 {
   background: var(--card-hover);
 }
 
-button {
+button, .btn-primary {
   background-color: var(--primary);
   color: white;
   border: none;
@@ -188,16 +188,49 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  alignItems: center;
+  justifyContent: center;
 }
 
-button:hover {
+button:hover, .btn-primary:hover {
   background-color: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-button:active {
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--card-hover);
+  transform: translateY(-2px);
+}
+
+button:active, .btn-primary:active, .btn-secondary:active {
   transform: scale(0.98);
+}
+
+.swal-actions-custom {
+  gap: 1rem !important;
+  margin-top: 1.5rem !important;
+}
+
+.swal2-confirm {
+  background-color: var(--error) !important;
+}
+
+.swal2-cancel {
+  margin-left: 0.75rem !important;
 }
 
 input {
