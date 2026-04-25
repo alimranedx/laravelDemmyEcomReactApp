@@ -63,31 +63,24 @@ const Checkout = () => {
       .join(', ');
 
     try {
-      let response;
+      // Unified endpoint for both Auth and Guest
+      const payload = {
+        items: checkoutItems.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity || 1,
+        })),
+        shipping_address: shippingAddress,
+        payment_method: form.paymentMethod,
+      };
 
-      if (token) {
-        // Logged-in user — authenticated endpoint
-        response = await api.post('/user/checkout', {
-          items: checkoutItems.map((item) => ({
-            product_id: item.id,
-            quantity: item.quantity || 1,
-          })),
-          shipping_address: shippingAddress,
-          payment_method: form.paymentMethod,
-        });
-        if (!singleProduct) dispatch(clearCart());
-      } else {
-        // Guest — public COD endpoint
-        response = await api.post('/guest-checkout', {
-          items: checkoutItems.map((item) => ({
-            product_id: item.id,
-            quantity: item.quantity || 1,
-          })),
-          guest_phone: form.phone,
-          shipping_address: shippingAddress,
-        });
-        if (!singleProduct) dispatch(clearCart());
+      // Add guest phone if not logged in
+      if (!token) {
+        payload.guest_phone = form.phone;
       }
+
+      const response = await api.post('/checkout', payload);
+      
+      if (!singleProduct) dispatch(clearCart());
 
       toast.success('Order placed successfully!');
       const data = response.data?.data;

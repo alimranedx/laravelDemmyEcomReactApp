@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { logout, fetchMe } from '../../store/slices/authSlice';
 import api from '../../api/client';
 import { motion } from 'framer-motion';
@@ -8,6 +9,7 @@ import { confirmAction } from '../../utils/alerts';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -199,10 +201,15 @@ const Dashboard = () => {
                         {order.status || 'Pending'}
                       </span>
                     </td>
-                    <td style={{ padding: '1.25rem 0', fontWeight: '700' }}>${order.total}</td>
+                    <td style={{ padding: '1.25rem 0', fontWeight: '700' }}>${Number(order.total_price).toFixed(2)}</td>
                     <td style={{ padding: '1.25rem 0', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        <button style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--glass-border)' }}>Details</button>
+                        <button 
+                          onClick={() => navigate(`/orders/${order.id}`)}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--glass-border)' }}
+                        >
+                          Details
+                        </button>
                         {(order.status?.toLowerCase() === 'pending' || !order.status) && (
                           <button 
                             onClick={() => handleCancelOrder(order.id)}

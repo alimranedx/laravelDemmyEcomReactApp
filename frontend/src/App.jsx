@@ -15,6 +15,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Sidebar from './components/layout/Sidebar';
 import TrackOrder from './pages/TrackOrder';
+import OrderDetails from './pages/dashboard/OrderDetails';
 import { Toaster } from 'react-hot-toast';
 
 
@@ -46,6 +47,7 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/orders/:id" element={token ? <OrderDetails /> : <Navigate to="/login" />} />
         </Routes>
         <Footer />
         <Toaster position="bottom-right" toastOptions={{
